@@ -1,4 +1,4 @@
-# CRUD with Nest.js
+# Nest.js CRUD with onion architecture
 With onion architecture.
 
 ## Running the app in Docker environment

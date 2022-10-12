@@ -1,0 +1,4 @@
+CREATE EXTENSION IF NOT EXISTS "unaccent";
+ALTER EXTENSION "unaccent" SET SCHEMA public;
+
+CREATE DATABASE categories;

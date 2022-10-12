@@ -1,0 +1,207 @@
+version: '3.6'
+
+networks:
+  app-network:
+    driver: bridge
+
+services:
+  postgres:
+    container_name: postgres
+    build:
+      context: ./devops/postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    volumes:
+      - ./devops/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db-data:/var/lib/postgresql/data
+      - db-logs:/var/log/postgresql
+    networks:
+      - app-network
+
+  backend:
+    container_name: backend
+    build:
+      context: .
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: postgres
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "5000:5000"
+      - "9229:9229"
+    command: npm run start
+    depends_on:
+      - postgres
+    restart: always
+    networks:
+      - app-network
+    links:
+      - postgres
+
+  nginx:
+    image: nginx:1.23.1-alpine
+    container_name: nginx
+    restart: always
+    volumes:
+      - ./devops/nginx/page.conf:/etc/nginx/page.conf
+      - ./devops/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - /var/log/nginx:/var/log/nginx/
+    ports:
+      - "80:80"
+    networks:
+      - app-network
+    links:
+      - backend
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor-arm:v0.45.0
+    container_name: cadvisor
+    restart: always
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    networks:
+      - app-network
+    labels:
+      org.label-schema.group: 'monitoring'
+
+  node-exporter:
+    image: prom/node-exporter:v1.4.0
+    container_name: node-exporter
+    restart: always
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - app-network
+    labels:
+      org.label-schema.group: 'monitoring'
+
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:0.11.0
+    container_name: nginx-exporter
+    restart: always
+    environment:
+      - SCRAPE_URI=http://nginx/nginx_status
+      - TELEMETRY_PATH=/metrics
+      - NGINX_RETRIES=10
+    networks:
+      - app-network
+    links:
+      - nginx
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '5m'
+    labels:
+      org.label-schema.group: 'monitoring'
+
+  postgres-exporter:
+    image: wrouesnel/postgres_exporter:v0.8.0
+    container_name: postgres-exporter
+    restart: always
+    environment:
+      - DATA_SOURCE_URI=postgres/${POSTGRES_DB}?sslmode=disable
+      - DATA_SOURCE_USER=${POSTGRES_USER}
+      - DATA_SOURCE_PASS=${POSTGRES_PASSWORD}
+    networks:
+      - app-network
+    depends_on:
+      - postgres
+    links:
+      - postgres
+    labels:
+      org.label-schema.group: 'monitoring'
+
+  prometheus:
+    image: prom/prometheus:v2.39.1
+    container_name: prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./devops/prometheus/:/etc/prometheus/
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - app-network
+    links:
+      - backend
+      - cadvisor
+      - postgres-exporter
+      - nginx-exporter
+      - node-exporter
+    labels:
+      org.label-schema.group: 'monitoring'
+
+  loki:
+    image: grafana/loki:2.6.1
+    container_name: loki
+    restart: always
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./devops/loki:/etc/loki
+      - loki-data:/tmp/loki/
+    command: -config.file=/etc/loki/loki-config.yml
+    networks:
+      - app-network
+
+  grafana:
+    image: grafana/grafana:8.2.6
+    container_name: grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./devops/grafana/provisioning/:/etc/grafana/provisioning/
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=${GF_USERS_ALLOW_SIGN_UP}
+    networks:
+      - app-network
+    depends_on:
+      - prometheus
+      - loki
+    labels:
+      org.label-schema.group: 'monitoring'
+
+  promtail:
+    image: grafana/promtail:main-c8632e6
+    container_name: promtail
+    restart: always
+    volumes:
+      - ./devops/loki:/etc/promtail
+      - db-logs:/var/log/postgresql
+      - /var/log/nginx:/var/log/nginx
+    command: -config.file=/etc/promtail/loki-promtail-config.yml
+    links:
+      - loki
+    networks:
+      - app-network
+
+volumes:
+  db-logs:
+  db-data:
+  prometheus-data:
+  loki-data:
+  grafana-data:

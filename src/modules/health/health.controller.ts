@@ -16,7 +16,7 @@ export class HealthController {
     private db: SequelizeHealthIndicator,
   ) {}
 
-  @ApiOperation({ summary: 'Проверка состояния системы' })
+  @ApiOperation({ summary: 'Checking the system status' })
   @Get()
   @HealthCheck()
   check() {

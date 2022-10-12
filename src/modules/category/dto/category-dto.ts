@@ -11,19 +11,19 @@ import { Expose } from 'class-transformer';
 @Expose()
 export class BaseCategoryDto {
   @ApiProperty({
-    description: 'Уникальное название на англ. в системе',
+    description: 'Unique name in English',
     type: String,
     required: true,
   })
   @IsString()
   @IsNotEmpty()
   @Matches(/[A-Za-z0-9]$/, {
-    message: 'Только латинские символы',
+    message: 'Latin characters only',
   })
   slug: string;
 
   @ApiProperty({
-    description: 'Название категории',
+    description: 'Category name',
     type: String,
     required: true,
   })
@@ -32,7 +32,7 @@ export class BaseCategoryDto {
   name: string;
 
   @ApiProperty({
-    description: 'Описание категории',
+    description: 'Category description',
     type: String,
     required: false,
   })
@@ -41,7 +41,7 @@ export class BaseCategoryDto {
   description?: string;
 
   @ApiProperty({
-    description: 'Флаг активности',
+    description: 'Activity flag',
     type: Boolean,
     required: true,
   })
@@ -53,7 +53,7 @@ export class BaseCategoryDto {
 @Expose()
 export class CategoryDto extends BaseCategoryDto {
   @ApiProperty({
-    description: 'Уникальный идентификатор',
+    description: 'Unique identifier',
     type: String,
   })
   @IsString()

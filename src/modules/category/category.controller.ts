@@ -9,7 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { CreateCategoryDto } from './dto/create-category-dto';
 import { CategoryFilterDto } from './dto/category-filter-dto';
 import { CategoryDto } from './dto/category-dto';
@@ -25,21 +25,23 @@ export class CategoryController {
     private categoryService: ICategoryService,
   ) {}
 
-  @ApiOperation({ summary: 'Создание категории' })
-  @ApiResponse({ status: 200, description: 'Успешное удаление' })
-  @ApiResponse({ status: 200, description: 'Успешное получение' })
-  @ApiResponse({ status: 400, description: 'Ошибка обработки запроса' })
+  @ApiOperation({ summary: 'Create category' })
+  @ApiResponse({ status: 200, description: 'Success result' })
+  @ApiResponse({ status: 400, description: 'Request processing error' })
   @ApiResponse({ status: 500, description: 'Ошибка сервера' })
   @Post()
   createCategory(@Body() dto: CreateCategoryDto) {
     return this.categoryService.createCategory(dto);
   }
 
-  @ApiOperation({ summary: 'Обновление категории' })
-  @ApiResponse({ status: 200, description: 'Успешное удаление' })
-  @ApiResponse({ status: 200, description: 'Успешное получение' })
-  @ApiResponse({ status: 400, description: 'Ошибка обработки запроса' })
+  @ApiOperation({ summary: 'Update category' })
+  @ApiResponse({ status: 200, description: 'Success result' })
+  @ApiResponse({ status: 400, description: 'Request processing error' })
   @ApiResponse({ status: 500, description: 'Ошибка сервера' })
+  @ApiParam({
+    name: 'id',
+    description: 'Category identifier',
+  })
   @Patch(':id')
   updateCategory(
     @Param('id') categoryId: string,
@@ -48,41 +50,49 @@ export class CategoryController {
     return this.categoryService.updateCategory(categoryId, dto);
   }
 
-  @ApiOperation({ summary: 'Удаление категории' })
-  @ApiResponse({ status: 200, description: 'Успешное удаление' })
-  @ApiResponse({ status: 200, description: 'Успешное получение' })
-  @ApiResponse({ status: 400, description: 'Ошибка обработки запроса' })
+  @ApiOperation({ summary: 'Delete category' })
+  @ApiResponse({ status: 200, description: 'Success result' })
+  @ApiResponse({ status: 400, description: 'Request processing error' })
   @ApiResponse({ status: 500, description: 'Ошибка сервера' })
+  @ApiParam({
+    name: 'id',
+    description: 'Category identifier',
+  })
   @Delete(':id')
   deleteCategory(@Param('id') categoryId: string) {
     return this.categoryService.deleteCategory(categoryId);
   }
 
-  @ApiOperation({ summary: 'Получить категорию по идентификатору' })
-  @ApiResponse({ status: 200, description: 'Успешное удаление' })
-  @ApiResponse({ status: 200, description: 'Успешное получение' })
-  @ApiResponse({ status: 400, description: 'Ошибка обработки запроса' })
+  @ApiOperation({ summary: 'Get category by id' })
+  @ApiResponse({ status: 200, description: 'Success result' })
+  @ApiResponse({ status: 400, description: 'Request processing error' })
   @ApiResponse({ status: 500, description: 'Ошибка сервера' })
+  @ApiParam({
+    name: 'id',
+    description: 'Category identifier',
+  })
   @Get(':id')
   getById(@Param('id') categoryId): Promise<CategoryDto> {
     return this.categoryService.getCategoryById(categoryId);
   }
 
-  @ApiOperation({ summary: 'Получить категорию по коду' })
-  @ApiResponse({ status: 200, description: 'Успешное удаление' })
-  @ApiResponse({ status: 200, description: 'Успешное получение' })
-  @ApiResponse({ status: 400, description: 'Ошибка обработки запроса' })
+  @ApiOperation({ summary: 'Get category by slug' })
+  @ApiResponse({ status: 200, description: 'Success result' })
+  @ApiResponse({ status: 400, description: 'Request processing error' })
   @ApiResponse({ status: 500, description: 'Ошибка сервера' })
+  @ApiParam({
+    name: 'slug',
+    description: 'Category slug',
+  })
   @Get('/bySlug/:slug')
   getBySlug(@Param('slug') slug): Promise<CategoryDto> {
     return this.categoryService.getCategoryBySlug(slug);
   }
 
-  @ApiOperation({ summary: 'Получить категории по фильтру' })
-  @ApiResponse({ status: 200, description: 'Успешное удаление' })
-  @ApiResponse({ status: 200, description: 'Успешное получение' })
-  @ApiResponse({ status: 400, description: 'Ошибка обработки запроса' })
-  @ApiResponse({ status: 500, description: 'Ошибка сервера' })
+  @ApiOperation({ summary: 'Get category by filter' })
+  @ApiResponse({ status: 200, description: 'Success result' })
+  @ApiResponse({ status: 400, description: 'Request processing error' })
+  @ApiResponse({ status: 500, description: 'Server error' })
   @Get()
   getByFilter(@Query() filterDto: CategoryFilterDto) {
     return this.categoryService.getCategoriesByFilter(filterDto);

@@ -1,5 +1,4 @@
 # Nest.js CRUD with onion architecture
-With onion architecture.
 
 ## Running the app in Docker environment
 This mode includes PostgreSQL, Nginx, Cadvisor, Prometheus, Loki, Grafana, Promtail and other stuff for monitoring the infrastructure (like node-exporter, nginx-exporter, postgres-exporter). But first, you have to rename `.env.sample` to `.env` and filling empty values.

@@ -4,6 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { ValidationPipe } from '@nestjs/common';
 import { Logger } from 'nestjs-pino';
+import * as fs from 'fs';
 
 async function bootstrap() {
   const PORT = process.env.PORT || 5000;
@@ -16,6 +17,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
+  fs.writeFileSync('./redoc/swagger.json', JSON.stringify(document));
   SwaggerModule.setup('', app, document);
 
   app.useLogger(app.get(Logger));
